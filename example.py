@@ -273,7 +273,7 @@ def background( fn ):
             args   = args   ,
             kwargs = kwargs ,
             )
-        thread.isDaemon = True
+        thread.daemon = True
         thread.start()
         return thread
         
