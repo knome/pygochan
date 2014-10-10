@@ -6,6 +6,7 @@ import threading
 import time
 import functools
 import random
+import datetime
 
 
 def main():
@@ -17,6 +18,7 @@ def main():
     example003()
     example004()
     example005()
+    example006()
     return
 
 
@@ -225,7 +227,41 @@ def example005():
             print 'FINISHED', message[0]
         else:
             print 'RECEIVED', message[0], message[1]
+
+
+def example006():
+    """
+    thread-ring from the debian language shootout
     
+    this takes as long as it takes your hardware to perform
+    5,000,000 python thread context switches, roughly
+    """
+    channels = [ pygochan.Channel( 0 ) for _ in xrange( 503 ) ]
+    doneChan = pygochan.Channel()
+    
+    @background
+    def worker( workerNo, inChan, outChan ):
+        while True:
+            value = inChan.get()
+            if value == 0:
+                doneChan.put( workerNo )
+            else:
+                outChan.put( value - 1 )
+    
+    workers = []
+    for x in xrange( 503 ):
+        worker( x + 1 , channels[ x - 1 ], channels[ x ] )
+    
+    
+    initialValue = 5000000
+    print 'PUSHING INITIAL VALUE', str( datetime.datetime.now() )
+    
+    # we push into the final because its what the first pulls from
+    channels[ -1 ].put( initialValue )
+    
+    finalWorker = doneChan.get()
+    print 'RECEIVED FINAL WORKER', str( datetime.datetime.now() )
+    print finalWorker
 
 def background( fn ):
     """ run a function as a daemon thread """
